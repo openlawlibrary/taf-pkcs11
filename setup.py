@@ -15,7 +15,8 @@ packages = find_packages()
 ci_require = [
     "pylint==2.3.1",
     "bandit==1.6.0",
-    "pytest==4.5.0"
+    "pytest==4.5.0",
+    "pytest-cov==2.7.1"
 ]
 
 dev_require = [

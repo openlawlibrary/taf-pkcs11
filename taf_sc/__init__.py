@@ -1,3 +1,4 @@
+import os
 import platform
 from pathlib import Path
 
@@ -23,10 +24,14 @@ PLATFORM = '{}-{}'.format(_SYSTEM, _ARCHITECTURE)
 # opensc-pkcs11 lib absolute path
 OPENSC_LIB_PATH = Path(__file__).parent / OPENSC_LIBS_PATHS.get(PLATFORM, '')
 
-if not OPENSC_LIB_PATH.is_file():
-  raise PlatformNotSupported(
-      'opensc-pkcs11 library for platform {} is not included'.format(PLATFORM))
+PKCS11 = None
 
 
-PKCS11 = PyKCS11Lib()
-PKCS11.load(str(OPENSC_LIB_PATH.resolve()))
+# Skip loading for CI
+if not os.environ.get('IS_CI', False):
+  if not OPENSC_LIB_PATH.is_file():
+    raise PlatformNotSupported(
+        'opensc-pkcs11 library for platform {} is not included'.format(PLATFORM))
+
+  PKCS11 = PyKCS11Lib()
+  PKCS11.load(str(OPENSC_LIB_PATH.resolve()))
