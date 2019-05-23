@@ -4,7 +4,26 @@ sudo: false
 cache: pip
 python: 3.5
 
+os:
+  - linux
+dist:
+  - xenial
+compiler:
+  - gcc
+
+# install dependencies
+addons:
+  apt:
+    update: true
+    packages:
+      - libhdf5-serial-dev
+      - zlib1g-dev
+      - libatlas-base-dev
+      - lcov
+      - swig3.0
+
 install:
+  - mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
   - pip install .[ci] # Install TAF with CI deps
 
 script:
