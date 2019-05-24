@@ -1,3 +1,4 @@
+import logging
 import traceback
 from contextlib import contextmanager
 
@@ -8,6 +9,8 @@ from PyKCS11 import (CKA_CLASS, CKA_ID, CKF_RW_SESSION, CKF_SERIAL_SESSION,
 from . import PKCS11
 from .exceptions import (SmartCardFindKeyObjectError, SmartCardNotPresentError,
                          SmartCardSigningError, SmartCardWrongPinError)
+
+logger = logging.getLogger(__name__)
 
 
 def sc_is_present(pkcs11=PKCS11):
@@ -23,14 +26,20 @@ def sc_session(pin, pkcs11=PKCS11):
 
   try:
     slot = pkcs11.getSlotList(tokenPresent=True)[0]
+
     session = pkcs11.openSession(slot, CKF_SERIAL_SESSION | CKF_RW_SESSION)
+    logger.debug('Session opened for slot %s', slot)
+
     session.login(pin)
     yield session
     session.logout()
+
+    logger.debug('Successfully logged out of session.')
   except PyKCS11Error:
     raise SmartCardWrongPinError('PIN is not valid.')
   finally:
     session.closeSession()
+    logger.debug('Successfully closed the session.')
 
 
 def sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=PKCS11):
@@ -44,6 +53,8 @@ def sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=PKCS11):
   """
   if isinstance(data, str):
     data = data.encode()
+
+  logger.debug('About to sign data %s with mechanism %s', data, mechanism)
 
   with sc_session(pin, pkcs11) as session:
     try:

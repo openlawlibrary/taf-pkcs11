@@ -1,3 +1,4 @@
+import logging
 import os
 import platform
 from pathlib import Path
@@ -5,6 +6,8 @@ from pathlib import Path
 from PyKCS11 import PyKCS11Lib
 
 from .exceptions import PlatformNotSupported
+
+logger = logging.getLogger(__name__)
 
 # prebuild opensc libraries
 OPENSC_LIBS_PATHS = {
@@ -21,6 +24,8 @@ _ARCHITECTURE = platform.architecture()[0]
 
 PLATFORM = '{}-{}'.format(_SYSTEM, _ARCHITECTURE)
 
+logger.info('Platform: %s', PLATFORM)
+
 # opensc-pkcs11 lib absolute path
 OPENSC_LIB_PATH = Path(__file__).parent / OPENSC_LIBS_PATHS.get(PLATFORM, '')
 
@@ -35,3 +40,5 @@ if not os.environ.get('IS_CI', False):
 
   PKCS11 = PyKCS11Lib()
   PKCS11.load(str(OPENSC_LIB_PATH.resolve()))
+
+  logger.info('PyKCS11Lib successfully loaded OpenSC library.')
