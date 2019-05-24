@@ -58,8 +58,6 @@ class PKCS11:
 
   def __init__(self, sc_inserted=True, able_to_open_session=True,
                _able_to_login=True):
-    self.is_mocked = True
-
     self._able_to_login = _able_to_login
     self._able_to_open_session = able_to_open_session
     self._sc_inserted = sc_inserted

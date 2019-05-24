@@ -29,9 +29,5 @@ install:
 script:
   - pylint taf_sc
   - bandit -r taf_sc
-  - IS_CI=1 pytest --cov-report term-missing --cov=taf_sc tests/ --cov-fail-under 95
+  - pytest --cov-report term-missing --cov=taf_sc tests/ --cov-fail-under 95
 
-after_success:
-  - cd tests
-  - coveralls
-  - cd -

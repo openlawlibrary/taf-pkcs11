@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+from functools import wraps
 from pathlib import Path
 
 from PyKCS11 import PyKCS11Lib
@@ -29,16 +30,27 @@ logger.info('Platform: %s', PLATFORM)
 # opensc-pkcs11 lib absolute path
 OPENSC_LIB_PATH = Path(__file__).parent / OPENSC_LIBS_PATHS.get(PLATFORM, '')
 
-PKCS11 = None
 
+def init_pkcs11(api_func):
+  """Decorator to reinitialize PyKCS11 lib. Needed for long running processes.
+  """
+  @wraps(api_func)
+  def decorator(*args, **kwargs):
+    """If pkcs11 is NOT passed in kwargs, instantiate it and add it to
+    kwargs.
+                  NOTE: pkcs11 MUST be passed as kwarg!
+    """
+    pkcs11 = kwargs.pop('pkcs11', None)
+    if not pkcs11:
+      if not OPENSC_LIB_PATH.is_file():
+        raise PlatformNotSupported(
+            'opensc-pkcs11 library for platform {} is not included'
+            .format(PLATFORM))
 
-# Skip loading for CI
-if not os.environ.get('IS_CI', False):
-  if not OPENSC_LIB_PATH.is_file():
-    raise PlatformNotSupported(
-        'opensc-pkcs11 library for platform {} is not included'.format(PLATFORM))
+      pkcs11 = PyKCS11Lib()
+      pkcs11.load(str(OPENSC_LIB_PATH.resolve()))
+      logger.debug('PyKCS11Lib successfully loaded OpenSC library.')
+    kwargs['pkcs11'] = pkcs11
 
-  PKCS11 = PyKCS11Lib()
-  PKCS11.load(str(OPENSC_LIB_PATH.resolve()))
-
-  logger.info('PyKCS11Lib successfully loaded OpenSC library.')
+    return api_func(*args, **kwargs)
+  return decorator

@@ -1,7 +1,9 @@
+import os
+
 from PyKCS11 import (CKG_MGF1_SHA256, CKM_SHA256, CKM_SHA256_RSA_PKCS_PSS,
                      CKM_SHA512, RSA_PSS_Mechanism)
 
-MOCK_PYKCS11 = True
+MOCK_PYKCS11 = True  # Set to False to test it with real PyKCS11Lib and smart card
 
 VALID_KEY_ID = (0x01,)
 WRONG_KEY_ID = (0x05,)
