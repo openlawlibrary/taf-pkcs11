@@ -6,7 +6,7 @@ from PyKCS11 import (CKA_CLASS, CKA_ID, CKF_RW_SESSION, CKF_SERIAL_SESSION,
                      CKO_PRIVATE_KEY, PyKCS11Error, RSA_PSS_Mechanism)
 
 from . import PKCS11
-from .exceptions import (SmartCardFindObjectError, SmartCardNotPresentError,
+from .exceptions import (SmartCardFindKeyObjectError, SmartCardNotPresentError,
                          SmartCardSigningError, SmartCardWrongPinError)
 
 
@@ -17,8 +17,8 @@ def sc_is_present(pkcs11=PKCS11):
 
 @contextmanager
 def sc_session(pin, pkcs11=PKCS11):
-  """Try to login with provided PIN and return session."""
-  if not sc_is_present(pkcs11=pkcs11):
+  """Try to log in with provided PIN and return session."""
+  if not sc_is_present(pkcs11):
     raise SmartCardNotPresentError('Please insert your smart card.')
 
   try:
@@ -50,7 +50,7 @@ def sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=PKCS11):
       priv_key = session.findObjects([(CKA_CLASS, CKO_PRIVATE_KEY), (CKA_ID, key_id)])[0]
       return session.sign(priv_key, data, mechanism)
     except (IndexError, TypeError):
-      raise SmartCardFindObjectError(key_id)
+      raise SmartCardFindKeyObjectError(key_id)
     except PyKCS11Error:
       raise SmartCardSigningError(traceback.format_exc())
 

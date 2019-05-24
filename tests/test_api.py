@@ -1,7 +1,8 @@
 import pytest
+
 from taf_sc.api import (sc_is_present, sc_session, sc_sign_rsa,
                         sc_sign_rsa_pkcs_pss_sha256)
-from taf_sc.exceptions import (SmartCardFindObjectError,
+from taf_sc.exceptions import (SmartCardFindKeyObjectError,
                                SmartCardNotPresentError, SmartCardSigningError,
                                SmartCardWrongPinError)
 
@@ -22,7 +23,7 @@ def test_sc_is_present_should_return_false(pkcs11):
 
 
 def test_sc_session_with_valid_pin_should_return_session_obj(pkcs11):
-  with sc_session(VALID_PIN, pkcs11=pkcs11) as session:
+  with sc_session(VALID_PIN, pkcs11) as session:
     assert session
 
     if pkcs11.is_mocked:
@@ -48,7 +49,7 @@ def test_sc_session_wrong_pin_should_raise_error(pkcs11):
 
 
 def test_sc_sign_rsa_wrong_key_id_should_raise_error(pkcs11):
-  with pytest.raises(SmartCardFindObjectError):
+  with pytest.raises(SmartCardFindKeyObjectError):
     sc_sign_rsa('test', VALID_MECH, VALID_PIN, key_id=WRONG_KEY_ID, pkcs11=pkcs11)
 
 

@@ -13,6 +13,11 @@ def _is_valid_mechanism(mechanism):
 
 
 class _Session:
+  """Fake pkcs11 session implementation used to test API.
+  For more info:
+    https://github.com/LudovicRousseau/PyKCS11/blob/master/PyKCS11/__init__.py#L851
+  """
+
   def __init__(self, able_to_login=True):
     self._able_to_login = able_to_login
     self.logged_in = False
@@ -46,6 +51,10 @@ class _Session:
 
 
 class PKCS11:
+  """Fake pkcs11 lib implementation used to test API.
+  For more info:
+    https://github.com/LudovicRousseau/PyKCS11/blob/master/PyKCS11/__init__.py#L453
+  """
 
   def __init__(self, sc_inserted=True, able_to_open_session=True,
                _able_to_login=True):
