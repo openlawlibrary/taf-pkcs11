@@ -1,8 +1,7 @@
 import pytest
-
-from taf_sc.api import (sc_is_present, sc_session, sc_sign_rsa,
+from oll_sc.api import (sc_is_present, sc_session, sc_sign_rsa,
                         sc_sign_rsa_pkcs_pss_sha256)
-from taf_sc.exceptions import (SmartCardFindKeyObjectError,
+from oll_sc.exceptions import (SmartCardFindKeyObjectError,
                                SmartCardNotPresentError, SmartCardSigningError,
                                SmartCardWrongPinError)
 

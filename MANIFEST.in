@@ -1,1 +1,1 @@
-recursive-include taf_sc/opensc *
+recursive-include oll_sc/opensc *

@@ -1,11 +1,11 @@
 from setuptools import find_packages, setup
 
-PACKAGE_NAME = 'taf-sc'
+PACKAGE_NAME = 'oll-sc'
 VERSION = '0.1.0'
 AUTHOR = 'Open Law Library'
 AUTHOR_EMAIL = 'info@openlawlib.org'
-DESCRIPTION = 'Smart card support used by TAF'
-URL = 'https://github.com/platform/taf-sc/tree/master'
+DESCRIPTION = 'Wrapper around PyKCS11 and openSC used to create smart card signatures'
+URL = 'https://github.com/platform/oll-sc/tree/master'
 
 with open('README.md', encoding='utf-8') as file_object:
   long_description = file_object.read()
@@ -41,7 +41,7 @@ setup(
     packages=packages,
     include_package_data=True,
     data_files=[
-        ('lib/site-packages/taf_sc', [
+        ('lib/site-packages/oll_sc', [
             './LICENSE.txt',
             './README.md'
         ])
@@ -59,7 +59,7 @@ setup(
     tests_require=tests_require,
     entry_points={
         'console_scripts': [
-            'taf-sc = taf_sc.cli:taf_sc'
+            'oll-sc = oll_sc.cli:oll_sc'
         ]
     },
     classifiers=[

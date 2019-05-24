@@ -24,10 +24,10 @@ addons:
 
 install:
   - mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
-  - pip install .[ci] # Install TAF with CI deps
+  - pip install .[ci] # Install with CI deps
 
 script:
-  - pylint taf_sc
-  - bandit -r taf_sc
-  - pytest --cov-report term-missing --cov=taf_sc tests/ --cov-fail-under 95
+  - pylint oll_sc
+  - bandit -r oll_sc
+  - pytest --cov-report term-missing --cov=oll_sc tests/ --cov-fail-under 95
 

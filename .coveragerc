@@ -1,8 +1,8 @@
 [run]
 omit =
-    taf_sc/__init__.py
-    taf_sc/cli.py
-    taf_sc/exceptions.py
+    oll_sc/__init__.py
+    oll_sc/cli.py
+    oll_sc/exceptions.py
 
 [report]
 exclude_lines =
