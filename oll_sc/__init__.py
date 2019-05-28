@@ -41,7 +41,7 @@ def init_pkcs11(api_func):
                   NOTE: pkcs11 MUST be passed as kwarg!
     """
     pkcs11 = kwargs.pop('pkcs11', None)
-    if not pkcs11:
+    if pkcs11 is None:
       if not OPENSC_LIB_PATH.is_file():
         raise PlatformNotSupported(
             'opensc-pkcs11 library for platform {} is not included'
