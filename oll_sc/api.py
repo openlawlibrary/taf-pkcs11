@@ -20,7 +20,12 @@ logger = logging.getLogger(__name__)
 
 @init_pkcs11
 def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
-  """Export public key for provided key id from smart card."""
+  """Export public key for provided key id from smart card.
+
+  Arguments:
+    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - pin(str): Pin for session login
+  """
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
       pub_key = session.findObjects([(CKA_ID, key_id), (CKA_CLASS, CKO_PUBLIC_KEY)])[0]
@@ -41,7 +46,12 @@ def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
 
 @init_pkcs11
 def sc_export_x509_pem(key_id, pin, pkcs11=None):
-  """Export x509 certificate for provided key id from smart card."""
+  """Export x509 certificate for provided key id from smart card.
+
+  Arguments:
+    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - pin(str): Pin for session login
+  """
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
       x509_cert = session.findObjects([(CKA_ID, key_id),
@@ -68,7 +78,11 @@ def sc_is_present(pkcs11=None):
 @contextmanager
 @init_pkcs11
 def sc_session(pin, pkcs11=None):
-  """Try to log in with provided PIN and return session."""
+  """Open token session needed for signing, encryption, etc.
+
+  Arguments:
+    - pin(str): Pin for session login
+  """
   if not sc_is_present(pkcs11=pkcs11):
     raise SmartCardNotPresentError('Please insert your smart card.')
 
@@ -97,8 +111,8 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   Arguments:
     - data(str | bytes): Data to be digested and signed
     - mechanism(PyKCS11 mechanism): Consult PyKCS11 for more info
+    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
     - pin(str): Pin for session login
-    - key_id(tuple): Key ID in hex(has to be tuple, that's why trailing comma)
   """
   if isinstance(data, str):
     data = data.encode()
@@ -121,8 +135,8 @@ def sc_sign_rsa_pkcs_pss_sha256(data, key_id, pin, pkcs11=None):
 
   Arguments:
     - data(str | bytes): Data to be digested and signed
+    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
     - pin(str): Pin for session login
-    - key_id(tuple): Key ID
   """
   mechanism = RSA_PSS_Mechanism(CKM_SHA256_RSA_PKCS_PSS, CKM_SHA256, CKG_MGF1_SHA256, 32)
   return bytes(sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=pkcs11))
