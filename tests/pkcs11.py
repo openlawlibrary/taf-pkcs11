@@ -1,8 +1,10 @@
 # Fake pkcs11 classes for simulation
+import pickle
+from pathlib import Path
+
 from PyKCS11 import PyKCS11Error
 
-from .settings import (VALID_KEY_ID, VALID_MECH, VALID_PIN, WRONG_KEY_ID,
-                       WRONG_MECH, WRONG_PIN)
+from .settings import VALID_KEY_ID, VALID_MECH, VALID_PIN
 
 
 def _is_valid_mechanism(mechanism):
@@ -30,6 +32,13 @@ class _Session:
     if args[0][1][1] == VALID_KEY_ID:
       return ['pk1']
     return []
+
+  def getAttributeValue(self, obj, *args):
+    if obj == 'pk1':
+      with open(str(Path(__file__).parent / 'keys/public_key.der'), 'rb') as der:
+        return [pickle.loads(der.read())]
+    else:
+      return []
 
   def login(self, pin, user_type=None):
     if not self._able_to_login or pin != VALID_PIN:

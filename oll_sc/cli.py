@@ -2,13 +2,35 @@ from pathlib import Path
 
 import click
 
-from .api import sc_is_present, sc_session, sc_sign_rsa_pkcs_pss_sha256
+from .api import (sc_export_pub_key_pem, sc_is_present, sc_session,
+                  sc_sign_rsa_pkcs_pss_sha256)
 from .exceptions import SmartCardError
 
 
 @click.group()
 def oll_sc():
   """oll-sc tool CLI"""
+
+
+@oll_sc.command()
+@click.argument('key_id', type=int)
+@click.argument('pin')
+@click.option('--output-path', '-o', type=click.Path(), default=None,
+              help='The output file path to write public key pem to.')
+def public_key(key_id, pin, output_path=None):
+  """Extract public key from smart card in PEM format."""
+  try:
+    pub_key_pem_bytes = sc_export_pub_key_pem((key_id,), pin)
+    pub_key_pem = pub_key_pem_bytes.decode('utf-8')
+
+    if output_path:
+      with open(output_path, 'w') as out:
+        out.write(pub_key_pem)
+    else:
+      click.echo(pub_key_pem)
+
+  except SmartCardError as e:
+    click.echo(e)
 
 
 @oll_sc.command()
@@ -34,15 +56,12 @@ def check_pin(pin):
 
 @oll_sc.command()
 @click.argument('input_data')
+@click.argument('key_id', type=int)
 @click.argument('pin')
-@click.option('--key_id')
 @click.option('--output-path', '-o', type=click.Path(), default=None,
               help='The output file path to write signature to.')
-def sign_rsa_pkcs_pss_sha256(input_data, pin, key_id=None, output_path=None):
+def sign_rsa_pkcs_pss_sha256(input_data, key_id, pin, output_path=None):
   """Sign input using SHA256_RSA_PKCS_PSS mechanism."""
-  if key_id is None:
-    key_id = (0x01,)
-
   # Read file if input_data is path
   try:
     input_data = Path(input_data).read_bytes()
@@ -50,11 +69,10 @@ def sign_rsa_pkcs_pss_sha256(input_data, pin, key_id=None, output_path=None):
     pass
 
   try:
-    signature = sc_sign_rsa_pkcs_pss_sha256(input_data, pin, key_id)
+    signature = sc_sign_rsa_pkcs_pss_sha256(input_data, (key_id,), pin)
 
     if output_path:
       with open(output_path, 'wb') as out:
-        click.echo(type(signature))
         out.write(signature)
     else:
       click.echo(signature)

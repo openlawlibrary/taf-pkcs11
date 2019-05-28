@@ -2,15 +2,42 @@ import logging
 import traceback
 from contextlib import contextmanager
 
-from PyKCS11 import (CKA_CLASS, CKA_ID, CKF_RW_SESSION, CKF_SERIAL_SESSION,
-                     CKG_MGF1_SHA256, CKM_SHA256, CKM_SHA256_RSA_PKCS_PSS,
-                     CKO_PRIVATE_KEY, PyKCS11Error, RSA_PSS_Mechanism)
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from PyKCS11 import (CKA_CLASS, CKA_ID, CKA_VALUE, CKF_RW_SESSION,
+                     CKF_SERIAL_SESSION, CKG_MGF1_SHA256, CKM_SHA256,
+                     CKM_SHA256_RSA_PKCS_PSS, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
+                     PyKCS11Error, RSA_PSS_Mechanism)
 
 from . import init_pkcs11
-from .exceptions import (SmartCardFindKeyObjectError, SmartCardNotPresentError,
-                         SmartCardSigningError, SmartCardWrongPinError)
+from .exceptions import (SmartCardError, SmartCardFindKeyObjectError,
+                         SmartCardNotPresentError, SmartCardSigningError,
+                         SmartCardWrongPinError)
 
 logger = logging.getLogger(__name__)
+
+
+@init_pkcs11
+def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
+  """Export public key from smart card."""
+  with sc_session(pin, pkcs11=pkcs11) as session:
+    try:
+      pub_key = session.findObjects([(CKA_CLASS, CKO_PUBLIC_KEY), (CKA_ID, key_id)])[0]
+      pub_key_value = session.getAttributeValue(pub_key, [CKA_VALUE])[0]
+
+      pub_key_der = serialization.load_der_public_key(bytes(pub_key_value), default_backend())
+      # Convert public key DER to PEM format
+      pub_key_pem = pub_key_der.public_bytes(
+          serialization.Encoding.PEM,
+          serialization.PublicFormat.SubjectPublicKeyInfo,
+      )
+
+      logger.debug('Public key with key id: %s is \n%s', key_id, pub_key_pem.decode())
+      return pub_key_pem
+    except (IndexError, TypeError, ValueError):
+      raise SmartCardFindKeyObjectError(key_id)
+    except PyKCS11Error:
+      raise SmartCardError(traceback.format_exc())
 
 
 @init_pkcs11
@@ -45,7 +72,7 @@ def sc_session(pin, pkcs11=None):
 
 
 @init_pkcs11
-def sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=None):
+def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   """Create and return signature using provided rsa mechanism.
 
   Arguments:
@@ -70,13 +97,13 @@ def sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=None):
 
 
 @init_pkcs11
-def sc_sign_rsa_pkcs_pss_sha256(data, pin, key_id=(0x01,), pkcs11=None):
+def sc_sign_rsa_pkcs_pss_sha256(data, key_id, pin, pkcs11=None):
   """Sign data using SHA256_RSA_PKCS_PSS mechanism.
 
   Arguments:
     - data(str|bytes): Data to be digested and signed
     - pin(str): Pin for session login
-    - key_id(tuple): Key ID in hex (has to be tuple, that's why trailing comma)
+    - key_id(tuple): Key ID
   """
   mechanism = RSA_PSS_Mechanism(CKM_SHA256_RSA_PKCS_PSS, CKM_SHA256, CKG_MGF1_SHA256, 32)
-  return bytes(sc_sign_rsa(data, mechanism, pin, key_id, pkcs11=pkcs11))
+  return bytes(sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=pkcs11))
