@@ -23,7 +23,7 @@ def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
   """Export public key for provided key id from smart card.
 
   Arguments:
-    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
   """
   with sc_session(pin, pkcs11=pkcs11) as session:
@@ -49,7 +49,7 @@ def sc_export_x509_pem(key_id, pin, pkcs11=None):
   """Export x509 certificate for provided key id from smart card.
 
   Arguments:
-    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
   """
   with sc_session(pin, pkcs11=pkcs11) as session:
@@ -111,7 +111,7 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   Arguments:
     - data(str | bytes): Data to be digested and signed
     - mechanism(PyKCS11 mechanism): Consult PyKCS11 for more info
-    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
   """
   if isinstance(data, str):
@@ -135,7 +135,7 @@ def sc_sign_rsa_pkcs_pss_sha256(data, key_id, pin, pkcs11=None):
 
   Arguments:
     - data(str | bytes): Data to be digested and signed
-    - key_id(tuple): Key ID as tuple (e.g. (1, 0))
+    - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
   """
   mechanism = RSA_PSS_Mechanism(CKM_SHA256_RSA_PKCS_PSS, CKM_SHA256, CKG_MGF1_SHA256, 32)
