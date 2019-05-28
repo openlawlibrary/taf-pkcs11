@@ -7,11 +7,11 @@ from .exceptions import SmartCardError
 
 
 @click.group()
-def taf_sc():
-  """taf-sc tool CLI"""
+def oll_sc():
+  """oll-sc tool CLI"""
 
 
-@taf_sc.command()
+@oll_sc.command()
 def inserted():
   """Check if smart card is inserted."""
   if sc_is_present():
@@ -20,7 +20,7 @@ def inserted():
     click.echo('Smart card is not inserted.')
 
 
-@taf_sc.command()
+@oll_sc.command()
 @click.argument('pin')
 def check_pin(pin):
   """Check smart card PIN."""
@@ -32,7 +32,7 @@ def check_pin(pin):
     click.echo(e)
 
 
-@taf_sc.command()
+@oll_sc.command()
 @click.argument('input_data')
 @click.argument('pin')
 @click.option('--key_id')
