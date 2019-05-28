@@ -2,8 +2,8 @@ from pathlib import Path
 
 import click
 
-from .api import (sc_export_pub_key_pem, sc_is_present, sc_session,
-                  sc_sign_rsa_pkcs_pss_sha256)
+from .api import (sc_export_pub_key_pem, sc_export_x509_pem, sc_is_present,
+                  sc_session, sc_sign_rsa_pkcs_pss_sha256)
 from .exceptions import SmartCardError
 
 
@@ -76,6 +76,27 @@ def sign_rsa_pkcs_pss_sha256(input_data, key_id, pin, output_path=None):
         out.write(signature)
     else:
       click.echo(signature)
+
+  except SmartCardError as e:
+    click.echo(e)
+
+
+@oll_sc.command()
+@click.argument('key_id', type=int)
+@click.argument('pin')
+@click.option('--output-path', '-o', type=click.Path(), default=None,
+              help='The output file path to write public key pem to.')
+def x509(key_id, pin, output_path=None):
+  """Extract x509 certificate from smart card in PEM format."""
+  try:
+    x509_cert_bytes = sc_export_x509_pem((key_id,), pin)
+    x509_cert = x509_cert_bytes.decode('utf-8')
+
+    if output_path:
+      with open(output_path, 'w') as out:
+        out.write(x509_cert)
+    else:
+      click.echo(x509_cert)
 
   except SmartCardError as e:
     click.echo(e)

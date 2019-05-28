@@ -2,27 +2,28 @@ import logging
 import traceback
 from contextlib import contextmanager
 
+from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from PyKCS11 import (CKA_CLASS, CKA_ID, CKA_VALUE, CKF_RW_SESSION,
-                     CKF_SERIAL_SESSION, CKG_MGF1_SHA256, CKM_SHA256,
-                     CKM_SHA256_RSA_PKCS_PSS, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
+from PyKCS11 import (CKA_CERTIFICATE_TYPE, CKA_CLASS, CKA_ID, CKA_VALUE,
+                     CKC_X_509, CKF_RW_SESSION, CKF_SERIAL_SESSION,
+                     CKG_MGF1_SHA256, CKM_SHA256, CKM_SHA256_RSA_PKCS_PSS,
+                     CKO_CERTIFICATE, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
                      PyKCS11Error, RSA_PSS_Mechanism)
 
 from . import init_pkcs11
-from .exceptions import (SmartCardError, SmartCardFindKeyObjectError,
-                         SmartCardNotPresentError, SmartCardSigningError,
-                         SmartCardWrongPinError)
+from .exceptions import (SmartCardFindKeyObjectError, SmartCardNotPresentError,
+                         SmartCardSigningError, SmartCardWrongPinError)
 
 logger = logging.getLogger(__name__)
 
 
 @init_pkcs11
 def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
-  """Export public key from smart card."""
+  """Export public key for provided key id from smart card."""
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
-      pub_key = session.findObjects([(CKA_CLASS, CKO_PUBLIC_KEY), (CKA_ID, key_id)])[0]
+      pub_key = session.findObjects([(CKA_ID, key_id), (CKA_CLASS, CKO_PUBLIC_KEY)])[0]
       pub_key_value = session.getAttributeValue(pub_key, [CKA_VALUE])[0]
 
       pub_key_der = serialization.load_der_public_key(bytes(pub_key_value), default_backend())
@@ -32,12 +33,30 @@ def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
           serialization.PublicFormat.SubjectPublicKeyInfo,
       )
 
-      logger.debug('Public key with key id: %s is \n%s', key_id, pub_key_pem.decode())
+      logger.debug('Public key for key id: %s is \n%s', key_id, pub_key_pem.decode())
       return pub_key_pem
     except (IndexError, TypeError, ValueError):
       raise SmartCardFindKeyObjectError(key_id)
-    except PyKCS11Error:
-      raise SmartCardError(traceback.format_exc())
+
+
+@init_pkcs11
+def sc_export_x509_pem(key_id, pin, pkcs11=None):
+  """Export x509 certificate for provided key id from smart card."""
+  with sc_session(pin, pkcs11=pkcs11) as session:
+    try:
+      x509_cert = session.findObjects([(CKA_ID, key_id),
+                                       (CKA_CLASS, CKO_CERTIFICATE),
+                                       (CKA_CERTIFICATE_TYPE, CKC_X_509)])[0]
+      x509_cert_value = session.getAttributeValue(x509_cert, [CKA_VALUE])[0]
+      x509_cert_value_der = x509.load_der_x509_certificate(bytes(x509_cert_value),
+                                                           default_backend())
+      # Convert x509 certificate DER to PEM format
+      x509_cert_value_pem = x509_cert_value_der.public_bytes(serialization.Encoding.PEM)
+
+      logger.debug('X509 certificate for key id: %s is \n%s', key_id, x509_cert_value_pem.decode())
+      return x509_cert_value_pem
+    except (IndexError, TypeError, ValueError):
+      raise SmartCardFindKeyObjectError(key_id)
 
 
 @init_pkcs11
@@ -76,10 +95,10 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   """Create and return signature using provided rsa mechanism.
 
   Arguments:
-    - data(str|bytes): Data to be digested and signed
+    - data(str | bytes): Data to be digested and signed
     - mechanism(PyKCS11 mechanism): Consult PyKCS11 for more info
     - pin(str): Pin for session login
-    - key_id(tuple): Key ID in hex (has to be tuple, that's why trailing comma)
+    - key_id(tuple): Key ID in hex(has to be tuple, that's why trailing comma)
   """
   if isinstance(data, str):
     data = data.encode()
@@ -88,7 +107,7 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
 
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
-      priv_key = session.findObjects([(CKA_CLASS, CKO_PRIVATE_KEY), (CKA_ID, key_id)])[0]
+      priv_key = session.findObjects([(CKA_ID, key_id), (CKA_CLASS, CKO_PRIVATE_KEY)])[0]
       return session.sign(priv_key, data, mechanism)
     except (IndexError, TypeError):
       raise SmartCardFindKeyObjectError(key_id)
@@ -101,7 +120,7 @@ def sc_sign_rsa_pkcs_pss_sha256(data, key_id, pin, pkcs11=None):
   """Sign data using SHA256_RSA_PKCS_PSS mechanism.
 
   Arguments:
-    - data(str|bytes): Data to be digested and signed
+    - data(str | bytes): Data to be digested and signed
     - pin(str): Pin for session login
     - key_id(tuple): Key ID
   """

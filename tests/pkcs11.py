@@ -2,7 +2,8 @@
 import pickle
 from pathlib import Path
 
-from PyKCS11 import PyKCS11Error
+from PyKCS11 import (CKO_CERTIFICATE, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
+                     PyKCS11Error)
 
 from .settings import VALID_KEY_ID, VALID_MECH, VALID_PIN
 
@@ -29,13 +30,23 @@ class _Session:
     self.session_closed = True
 
   def findObjects(self, *args):
-    if args[0][1][1] == VALID_KEY_ID:
-      return ['pk1']
-    return []
+    # If pin is wrong, return empty list
+    if args[0][0][1] != VALID_KEY_ID:
+      return []
+
+    return {
+        # Certificate
+        CKO_CERTIFICATE: ['cert'],
+        CKO_PUBLIC_KEY: ['pub_key'],
+        CKO_PRIVATE_KEY: ['priv_key']
+    }.get(args[0][1][1], [])
 
   def getAttributeValue(self, obj, *args):
-    if obj == 'pk1':
-      with open(str(Path(__file__).parent / 'keys/public_key.der'), 'rb') as der:
+    if obj == 'pub_key':
+      with open(str(Path(__file__).parent / 'keys/public_key.cer'), 'rb') as der:
+        return [pickle.loads(der.read())]
+    elif obj == 'cert':
+      with open(str(Path(__file__).parent / 'keys/x509_cert.cer'), 'rb') as der:
         return [pickle.loads(der.read())]
     else:
       return []
