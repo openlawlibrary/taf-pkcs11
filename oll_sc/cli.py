@@ -55,18 +55,25 @@ def check_pin(pin):
 
 
 @oll_sc.command()
-@click.argument('input_data')
 @click.argument('key_id', type=int)
 @click.argument('pin')
+@click.option('--input-path', '-i', type=click.Path(), default=None,
+              help='Path of a file to sign.')
+@click.option('--input-data', '-d', type=str, default=None,
+              help='Data to sign.')
 @click.option('--output-path', '-o', type=click.Path(), default=None,
-              help='The output file path to write signature to.')
-def sign_rsa_pkcs_pss_sha256(input_data, key_id, pin, output_path=None):
+              help='Path of a file to write signature to.')
+def sign_rsa_pkcs_pss_sha256(key_id, pin, input_path, input_data, output_path):
   """Sign input using SHA256_RSA_PKCS_PSS mechanism."""
-  # Read file if input_data is path
-  try:
-    input_data = Path(input_data).read_bytes()
-  except IOError:
-    pass
+  # Input path overrides input data
+  if input_path is not None:
+    input_path = Path(input_path)
+    if input_path.is_file():
+      input_data = input_path.read_bytes()
+
+  if input_data is None:
+    click.echo('\nError: Missing option "--input-data" or "--input-path".')
+    return
 
   try:
     signature = sc_sign_rsa_pkcs_pss_sha256(input_data, (key_id,), pin)

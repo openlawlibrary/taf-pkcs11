@@ -1,5 +1,4 @@
 import logging
-import traceback
 from contextlib import contextmanager
 
 from cryptography import x509
@@ -22,9 +21,18 @@ logger = logging.getLogger(__name__)
 def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
   """Export public key for provided key id from smart card.
 
-  Arguments:
+  Args:
     - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    Public key in PEM format (bytes)
+
+  Raises:
+    - SmartCardNotPresentError: If smart card is not inserted
+    - SmartCardWrongPinError: If pin is incorrect
+    - SmartCardFindKeyObjectError: If public key for given key id does not exist
   """
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
@@ -48,9 +56,18 @@ def sc_export_pub_key_pem(key_id, pin, pkcs11=None):
 def sc_export_x509_pem(key_id, pin, pkcs11=None):
   """Export x509 certificate for provided key id from smart card.
 
-  Arguments:
+  Args:
     - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    x509 certificate in PEM format (bytes)
+
+  Raises:
+    - SmartCardNotPresentError: If smart card is not inserted
+    - SmartCardWrongPinError: If pin is incorrect
+    - SmartCardFindKeyObjectError: If x509 certificate for given key id does not exist
   """
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
@@ -71,7 +88,14 @@ def sc_export_x509_pem(key_id, pin, pkcs11=None):
 
 @init_pkcs11
 def sc_is_present(pkcs11=None):
-  """Check if smart card is inserted."""
+  """Check if smart card is inserted.
+
+  Args:
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    True if smart card is inserted otherwise False (bool)
+  """
   return bool(pkcs11.getSlotList(tokenPresent=True))
 
 
@@ -80,8 +104,16 @@ def sc_is_present(pkcs11=None):
 def sc_session(pin, pkcs11=None):
   """Open token session needed for signing, encryption, etc.
 
-  Arguments:
+  Args:
     - pin(str): Pin for session login
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    Session object (pykcs11.Session)
+
+  Raises:
+    - SmartCardNotPresentError: If smart card is not inserted
+    - SmartCardWrongPinError: If pin is incorrect
   """
   if not sc_is_present(pkcs11=pkcs11):
     raise SmartCardNotPresentError('Please insert your smart card.')
@@ -108,11 +140,21 @@ def sc_session(pin, pkcs11=None):
 def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   """Create and return signature using provided rsa mechanism.
 
-  Arguments:
+  Args:
     - data(str | bytes): Data to be digested and signed
     - mechanism(PyKCS11 mechanism): Consult PyKCS11 for more info
     - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    Signature based on provided arguments (bytes)
+
+  Raises:
+    - SmartCardNotPresentError: If smart card is not inserted
+    - SmartCardWrongPinError: If pin is incorrect
+    - SmartCardFindKeyObjectError: If private key for given key id does not exist
+    - SmartCardSigningError: If error happened during signing data
   """
   if isinstance(data, str):
     data = data.encode()
@@ -126,17 +168,27 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
     except (IndexError, TypeError):
       raise SmartCardFindKeyObjectError(key_id)
     except PyKCS11Error:
-      raise SmartCardSigningError(traceback.format_exc())
+      raise SmartCardSigningError(data)
 
 
 @init_pkcs11
 def sc_sign_rsa_pkcs_pss_sha256(data, key_id, pin, pkcs11=None):
   """Sign data using SHA256_RSA_PKCS_PSS mechanism.
 
-  Arguments:
+  Args:
     - data(str | bytes): Data to be digested and signed
     - key_id(tuple): Key ID as tuple (e.g. (1,))
     - pin(str): Pin for session login
+    - pkcs11(PyKCS11): Automatically initialied; do not pass this argument
+
+  Returns:
+    Signature based on RSASSA-PSS signing algorithm on SHA256 digested data (bytes)
+
+  Raises:
+    - SmartCardNotPresentError: If smart card is not inserted
+    - SmartCardWrongPinError: If pin is incorrect
+    - SmartCardFindKeyObjectError: If private key for given key id does not exist
+    - SmartCardSigningError: If error happened during signing data
   """
   mechanism = RSA_PSS_Mechanism(CKM_SHA256_RSA_PKCS_PSS, CKM_SHA256, CKG_MGF1_SHA256, 32)
   return bytes(sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=pkcs11))

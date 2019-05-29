@@ -21,4 +21,5 @@ class SmartCardNotPresentError(SmartCardError):
 
 
 class SmartCardSigningError(SmartCardError):
-  pass
+  def __init__(self, data):
+    super().__init__('Unable to create generate for data:\n{}\n'.format(data))
