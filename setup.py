@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 PACKAGE_NAME = 'oll-sc'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 AUTHOR = 'Open Law Library'
 AUTHOR_EMAIL = 'info@openlawlib.org'
 DESCRIPTION = 'Wrapper around PyKCS11 and openSC used to create smart card signatures'
