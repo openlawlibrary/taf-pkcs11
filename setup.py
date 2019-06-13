@@ -49,7 +49,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'click==6.7',
-        'cryptography==2.3.1',
+        'cryptography>=2.3.1',
         'PyKCS11==1.5.5'
     ],
     extras_require={
