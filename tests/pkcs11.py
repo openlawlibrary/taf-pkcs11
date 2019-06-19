@@ -30,7 +30,7 @@ class _Session:
     self.session_closed = True
 
   def findObjects(self, *args):
-    # If pin is wrong, return empty list
+    # If key id is wrong, return empty list
     if args[0][0][1] != VALID_KEY_ID:
       return []
 

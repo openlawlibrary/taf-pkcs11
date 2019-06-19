@@ -22,4 +22,4 @@ class SmartCardNotPresentError(SmartCardError):
 
 class SmartCardSigningError(SmartCardError):
   def __init__(self, data):
-    super().__init__('Unable to create generate for data:\n{}\n'.format(data))
+    super().__init__('Unable to create signature for data:\n{}\n'.format(data))
