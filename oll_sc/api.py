@@ -4,11 +4,12 @@ from contextlib import contextmanager
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from PyKCS11 import (CKA_CERTIFICATE_TYPE, CKA_CLASS, CKA_ID, CKA_VALUE,
-                     CKC_X_509, CKF_RW_SESSION, CKF_SERIAL_SESSION,
-                     CKG_MGF1_SHA256, CKM_SHA256, CKM_SHA256_RSA_PKCS_PSS,
-                     CKO_CERTIFICATE, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
-                     PyKCS11Error, RSA_PSS_Mechanism)
+from PyKCS11 import (CKA_ALWAYS_AUTHENTICATE, CKA_CERTIFICATE_TYPE, CKA_CLASS,
+                     CKA_ID, CKA_VALUE, CKC_X_509, CKF_RW_SESSION,
+                     CKF_SERIAL_SESSION, CKG_MGF1_SHA256, CKM_SHA256,
+                     CKM_SHA256_RSA_PKCS_PSS, CKO_CERTIFICATE, CKO_PRIVATE_KEY,
+                     CKO_PUBLIC_KEY, CKU_CONTEXT_SPECIFIC, PyKCS11Error,
+                     RSA_PSS_Mechanism)
 
 from . import init_pkcs11
 from .exceptions import (SmartCardFindKeyObjectError, SmartCardNotPresentError,
@@ -164,6 +165,12 @@ def sc_sign_rsa(data, mechanism, key_id, pin, pkcs11=None):
   with sc_session(pin, pkcs11=pkcs11) as session:
     try:
       priv_key = session.findObjects([(CKA_ID, key_id), (CKA_CLASS, CKO_PRIVATE_KEY)])[0]
+
+      # If CKA_ALWAYS_AUTHENTICATE is True, login with CKU_CONTEXT_SPECIFIC
+      always_auth = session.getAttributeValue(priv_key, [CKA_ALWAYS_AUTHENTICATE])[0]
+      if always_auth:
+        session.login(pin, CKU_CONTEXT_SPECIFIC)
+
       return session.sign(priv_key, data, mechanism)
     except (IndexError, TypeError):
       raise SmartCardFindKeyObjectError(key_id)

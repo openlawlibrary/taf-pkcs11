@@ -2,8 +2,8 @@
 import pickle
 from pathlib import Path
 
-from PyKCS11 import (CKO_CERTIFICATE, CKO_PRIVATE_KEY, CKO_PUBLIC_KEY,
-                     PyKCS11Error)
+from PyKCS11 import (CKA_ALWAYS_AUTHENTICATE, CKO_CERTIFICATE, CKO_PRIVATE_KEY,
+                     CKO_PUBLIC_KEY, PyKCS11Error)
 
 from .settings import VALID_KEY_ID, VALID_MECH, VALID_PIN
 
@@ -30,7 +30,7 @@ class _Session:
     self.session_closed = True
 
   def findObjects(self, *args):
-    # If pin is wrong, return empty list
+    # If key id is wrong, return empty list
     if args[0][0][1] != VALID_KEY_ID:
       return []
 
@@ -48,6 +48,9 @@ class _Session:
     elif obj == 'cert':
       with open(str(Path(__file__).parent / 'keys/x509_cert.cer'), 'rb') as der:
         return [pickle.loads(der.read())]
+    elif obj == 'priv_key' and args[0][0] == CKA_ALWAYS_AUTHENTICATE:
+      return [True]
+
     else:
       return []
 
