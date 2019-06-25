@@ -20,14 +20,14 @@ def _yk_ctrl():
 
 
 def yk_setup(pin, mgm_key=generate_random_management_key(), retries=10):
-  """Use to setup inserted Yubikey, with following steps:
+  """Use to setup inserted Yubikey, with following steps (order is important):
       - reset to factory settings
       - set management key
+      - generate key(RSA2048)
+      - generate and import self-signed certificate(X509)
+      - set pin retries
       - set pin
       - set puk(same as pin)
-      - set pin retries
-      - generate ley(RSA2048)
-      - generate and import self-signed certificate
   """
   with _yk_ctrl() as ctrl:
     # Factory reset and set PINs
@@ -36,14 +36,11 @@ def yk_setup(pin, mgm_key=generate_random_management_key(), retries=10):
     ctrl.authenticate(DEFAULT_MANAGEMENT_KEY)
     ctrl.set_mgm_key(mgm_key)
 
-    ctrl.change_pin(DEFAULT_PIN, pin)
-    ctrl.change_puk(DEFAULT_PUK, pin)
-
     # Generate RSA2048
     pub_key = ctrl.generate_key(SLOT.SIGNATURE, ALGO.RSA2048, PIN_POLICY.ALWAYS)
 
     ctrl.authenticate(mgm_key)
-    ctrl.verify(pin)
+    ctrl.verify(DEFAULT_PIN)
 
     # Generate and import certificate
     now = datetime.datetime.now()
@@ -51,5 +48,7 @@ def yk_setup(pin, mgm_key=generate_random_management_key(), retries=10):
     ctrl.generate_self_signed_certificate(SLOT.SIGNATURE, pub_key, "OLL", now, valid_to)
 
     ctrl.set_pin_retries(pin_retries=retries, puk_retries=retries)
+    ctrl.change_pin(DEFAULT_PIN, pin)
+    ctrl.change_puk(DEFAULT_PUK, pin)
 
-    return pub_key
+  return pub_key
