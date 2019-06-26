@@ -2,6 +2,7 @@ import datetime
 from binascii import a2b_hex
 from contextlib import contextmanager
 
+from cryptography.hazmat.primitives import serialization
 from ykman.descriptor import open_device
 from ykman.piv import (ALGO, PIN_POLICY, SLOT, PivController,
                        generate_random_management_key)
@@ -51,4 +52,7 @@ def yk_setup(pin, cert_cn, mgm_key=generate_random_management_key(), retries=10)
     ctrl.change_pin(DEFAULT_PIN, pin)
     ctrl.change_puk(DEFAULT_PUK, pin)
 
-  return pub_key
+  return pub_key.public_bytes(
+      serialization.Encoding.PEM,
+      serialization.PublicFormat.SubjectPublicKeyInfo,
+  )

@@ -115,7 +115,8 @@ def x509(key_id, pin, output_path=None):
 @click.option('--retries', '-r', type=int, default=10, help='Number of pin and puk retries')
 def yubikey_setup(pin, cert_cn, retries):
   try:
-    yk_setup(pin, cert_cn, retries=retries or 10)
+    pub_key_pem = yk_setup(pin, cert_cn, retries=retries or 10)
     click.echo('Yubikey is setup.')
+    click.echo('Public key:\n\n{}'.format(pub_key_pem))
   except Exception as e:
     click.echo(e)
