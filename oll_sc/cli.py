@@ -110,13 +110,12 @@ def x509(key_id, pin, output_path=None):
 
 
 @oll_sc.command()
-@click.option('--pin', '-p', type=str, required=True,
-              help='Yubikey PIN.')
-@click.option('--retries', '-r', type=int, default=10,
-              help='Number of pin and puk retries')
-def yubikey_setup(pin, retries):
+@click.option('--pin', '-p', type=str, required=True, help='Yubikey PIN.')
+@click.option('--cert-cn', type=str, required=True, help='Certificate common name (CN)')
+@click.option('--retries', '-r', type=int, default=10, help='Number of pin and puk retries')
+def yubikey_setup(pin, cert_cn, retries):
   try:
-    yk_setup(pin, retries=retries or 10)
+    yk_setup(pin, cert_cn, retries=retries or 10)
     click.echo('Yubikey is setup.')
   except Exception as e:
     click.echo(e)
