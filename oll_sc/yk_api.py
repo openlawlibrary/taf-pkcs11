@@ -14,7 +14,14 @@ DEFAULT_MANAGEMENT_KEY = a2b_hex('0102030405060708010203040506070801020304050607
 
 
 @contextmanager
-def _yk_ctrl():
+def _yk():
+  yk = open_device(transports=TRANSPORT.CCID)
+  yield yk
+  yk.close()
+
+
+@contextmanager
+def _yk_piv_ctrl():
   yk = open_device(transports=TRANSPORT.CCID)
   yield PivController(yk.driver)
   yk.close()
@@ -30,7 +37,7 @@ def yk_setup(pin, cert_cn, mgm_key=generate_random_management_key(), retries=10)
       - set pin
       - set puk(same as pin)
   """
-  with _yk_ctrl() as ctrl:
+  with _yk_piv_ctrl() as ctrl:
     # Factory reset and set PINs
     ctrl.reset()
 
@@ -56,3 +63,8 @@ def yk_setup(pin, cert_cn, mgm_key=generate_random_management_key(), retries=10)
       serialization.Encoding.PEM,
       serialization.PublicFormat.SubjectPublicKeyInfo,
   )
+
+
+def yk_serial_num():
+  with _yk() as yk:
+    return yk.serial
