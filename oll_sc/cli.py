@@ -5,6 +5,7 @@ import click
 from .api import (sc_export_pub_key_pem, sc_export_x509_pem, sc_is_present,
                   sc_session, sc_sign_rsa_pkcs_pss_sha256)
 from .exceptions import SmartCardError
+from .yk_api import yk_setup
 
 
 @click.group()
@@ -47,9 +48,8 @@ def inserted():
 def check_pin(pin):
   """Check smart card PIN."""
   try:
-    with sc_session(pin):
-      pass
-    click.echo('PIN OK.')
+    with sc_session(pin) as _:
+      click.echo('PIN OK.')
   except SmartCardError as e:
     click.echo(e)
 
@@ -106,4 +106,18 @@ def x509(key_id, pin, output_path=None):
       click.echo(x509_cert)
 
   except SmartCardError as e:
+    click.echo(e)
+
+
+@oll_sc.command()
+@click.option('--pin', '-p', type=str, required=True, help='Yubikey PIN.')
+@click.option('--cert-cn', type=str, required=True, help='Certificate common name (CN)')
+@click.option('--cert-exp-days', type=int, default=365, help='Certificate expiration in days')
+@click.option('--pin-retries', type=int, default=10, help='Number of pin and puk retries')
+def yubikey_setup(pin, cert_cn, cert_exp_days, pin_retries):
+  try:
+    pub_key_pem = yk_setup(pin, cert_cn, cert_exp_days, pin_retries)
+    click.echo('Yubikey is setup.')
+    click.echo('Public key:\n\n{}'.format(pub_key_pem))
+  except Exception as e:
     click.echo(e)

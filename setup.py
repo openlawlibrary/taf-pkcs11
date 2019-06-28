@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 PACKAGE_NAME = 'oll-sc'
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 AUTHOR = 'Open Law Library'
 AUTHOR_EMAIL = 'info@openlawlib.org'
 DESCRIPTION = 'Wrapper around PyKCS11 and openSC used to create smart card signatures'
@@ -50,7 +50,8 @@ setup(
     install_requires=[
         'click==6.7',
         'cryptography>=2.3.1',
-        'PyKCS11==1.5.5'
+        'PyKCS11==1.5.5',
+        'yubikey-manager',
     ],
     extras_require={
         'ci': ci_require,
