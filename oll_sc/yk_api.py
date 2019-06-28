@@ -27,7 +27,7 @@ def _yk_piv_ctrl():
   yk.close()
 
 
-def yk_setup(pin, cert_cn, mgm_key=generate_random_management_key(), retries=10):
+def yk_setup(pin, cert_cn, cert_exp_days=365, pin_retries=10, mgm_key=generate_random_management_key()):
   """Use to setup inserted Yubikey, with following steps (order is important):
       - reset to factory settings
       - set management key
@@ -52,10 +52,10 @@ def yk_setup(pin, cert_cn, mgm_key=generate_random_management_key(), retries=10)
 
     # Generate and import certificate
     now = datetime.datetime.now()
-    valid_to = now + datetime.timedelta(days=365)
+    valid_to = now + datetime.timedelta(days=cert_exp_days)
     ctrl.generate_self_signed_certificate(SLOT.SIGNATURE, pub_key, cert_cn, now, valid_to)
 
-    ctrl.set_pin_retries(pin_retries=retries, puk_retries=retries)
+    ctrl.set_pin_retries(pin_retries=pin_retries, puk_retries=pin_retries)
     ctrl.change_pin(DEFAULT_PIN, pin)
     ctrl.change_puk(DEFAULT_PUK, pin)
 
