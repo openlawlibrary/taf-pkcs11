@@ -30,5 +30,5 @@ install:
 script:
   - pylint oll_sc
   - bandit -r oll_sc
-  - pytest --cov-report term-missing --cov=oll_sc tests/ --cov-fail-under 95
+  - pytest --cov-report term-missing --cov=oll_sc tests/
 
